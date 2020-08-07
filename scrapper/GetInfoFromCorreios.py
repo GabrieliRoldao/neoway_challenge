@@ -1,6 +1,7 @@
 import requests
 import bs4
 import jsonlines
+import sys
 from datetime import datetime
 
 
@@ -70,4 +71,9 @@ def execute(uf, total=200, localidade=''):
 
 
 if __name__ == '__main__':
-    execute('rj')
+    uf_to_search = sys.argv[1]
+    if len(sys.argv) > 1:
+        rows_to_get = sys.argv[2]
+        execute(uf_to_search, int(rows_to_get))
+    else:
+        execute(uf_to_search)
