@@ -3,9 +3,10 @@ import bs4
 import jsonlines
 import sys
 from datetime import datetime
+import os
 
 
-def getInfo(total_rows_to_get=200, uf='RS', localidade=''):
+def get_info(total_rows_to_get=200, uf='RS', localidade=''):
     url = 'http://www.buscacep.correios.com.br/sistemas/buscacep/resultadoBuscaFaixaCEP.cfm'
     scrapped_rows = 0
     start_row = 1
@@ -20,7 +21,6 @@ def getInfo(total_rows_to_get=200, uf='RS', localidade=''):
         response = requests.post(url, data=params)
         soup = bs4.BeautifulSoup(response.text, 'lxml')
 
-        #total_results_from_search = str(soup.select('.ctrlcontent')[0].contents[8]).strip().split(' ')[-1]
         total_results_from_search = soup.select('.ctrlcontent')[0].contents[8].strip().split(' ')[-1]
 
         if len(soup.select('.tmptabela')) > 1:
@@ -58,21 +58,22 @@ def getInfo(total_rows_to_get=200, uf='RS', localidade=''):
     return ceps
 
 
-def transformToJsonl(info, uf_name):
+def transform_to_jsonl(info, uf_name):
     now = datetime.now().strftime('%Y%m%d%H%M%S')
-    with jsonlines.open(f"info_from_uf_{uf_name}_{now}.jsonl", mode='w') as writer:
+    file_path = 'scrapper/files'
+    with jsonlines.open(f"{file_path}/info_from_uf_{uf_name}_{now}.jsonl", mode='w') as writer:
         for i in info['ceps']:
             writer.write(i)
 
 
 def execute(uf, total=200, localidade=''):
-    res = getInfo(total, uf, localidade)
-    transformToJsonl(res, uf)
+    res = get_info(total, uf, localidade)
+    transform_to_jsonl(res, uf)
 
 
 if __name__ == '__main__':
     uf_to_search = sys.argv[1]
-    if len(sys.argv) > 1:
+    if len(sys.argv) > 2:
         rows_to_get = sys.argv[2]
         execute(uf_to_search, int(rows_to_get))
     else:
