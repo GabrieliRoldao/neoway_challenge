@@ -3,7 +3,6 @@ import bs4
 import jsonlines
 import sys
 from datetime import datetime
-import os
 
 
 def get_info(total_rows_to_get=200, uf='RS', localidade=''):
