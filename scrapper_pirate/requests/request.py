@@ -6,13 +6,28 @@ import os
 
 class Request:
 
+    """
+    Class to make requests HTTP
+    """
     def __init__(self, url):
+        """
+        Parameters
+
+        url : str
+            The URL to get info about
+        """
         self.url = url
         logging_path = os.path.join(os.path.dirname(__file__), '../logger/logging.conf')
         logging.config.fileConfig(logging_path)
         self.logger = logging.getLogger('requestError')
 
     def make_post_request(self, params):
+        """
+        Method to make post requests
+
+        params : dictionary
+            The parameters to pass in request
+        """
         response = None
         try:
             response = requests.post(self.url, data=params)

@@ -7,6 +7,8 @@ from scrapper_pirate.scrapper.correios_scrapper import CorreiosScrapper
 
 
 if __name__ == '__main__':
+    if not os.path.isdir('scrapper_pirate/logs'):
+        os.mkdir('scrapper_pirate/logs')
     logging_path = os.path.join(os.path.dirname(__file__), 'scrapper_pirate/logger/logging.conf')
     logging.config.fileConfig(logging_path)
 

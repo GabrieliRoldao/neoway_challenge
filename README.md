@@ -1,18 +1,42 @@
 # Data Pirates challenge
 
-Scrapper that get info from [here](http://www.buscacep.correios.com.br/sistemas/buscacep/buscaFaixaCep.cfm) and pass 
+Scrapper project that get info from [Correios](http://www.buscacep.correios.com.br/sistemas/buscacep/buscaFaixaCep.cfm) and export 
 to JSONL file.
 
 **Requirements**
 
-This project runs on Python 3.8.
+This project runs on `Python 3.8`.
 
-To install all requirements, execute `pip install -r requirements.txt`
+To install all requirements, execute: 
+    
+    $ pip install -r requirements.txt
 
-**Run**
+**Run project**
 
-To execute this project, just run `python3 scrapper/get_info_from_correios.py uf rows_to_get` 
+To execute in console, run:
+    
+    $ python app.py sc 200
 
-Where:
-- uf: the uf you want to get info from
-- rows_to_get: the number of rows you want to retrieve
+Where `sc` is the UF name to get info and `200` is the total amount to get from scrapper.
+
+The default value for `uf` is `SP` and for `total_items` is `200`  
+
+To run this application as a docker container, run:
+
+    $ docker run --rm --name scrapper \
+        -v ~/scrapper/files_exported:/app/scrapper_pirate/files/ \
+        -v ~/scrapper/logs:/app/scrapper_pirate/logs \
+        -e UF=RS \
+        -e ITEMS=350 \
+        gabrieliroldao/scrapper_pirate:1.0.0
+
+
+**Run unit tests**
+
+To run unit tests, run:
+    
+    $ cd tests/scrapper
+    $ python scrapper_test.py 
+    
+
+Xoxo

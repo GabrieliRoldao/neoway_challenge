@@ -3,11 +3,28 @@ import os
 
 
 class JsonlExporter:
+    """
+    Class responsible for export files as jsonl
+    """
 
     def __init__(self, path='../files/'):
+        """
+        Parameters
+
+        path : str
+            The folder path to save files
+        """
         self.folder_path = os.path.join(os.path.dirname(__file__), path)
 
     def export(self, data, name):
+        """
+        Method export data as jsonl
+
+        Parameters
+
+        path : str
+            The folder path to save the files exported
+        """
         mode = 'a+'
         out_put_path = self.folder_path+name+'.jsonl'
 
