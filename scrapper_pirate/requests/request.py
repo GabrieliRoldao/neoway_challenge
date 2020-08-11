@@ -1,4 +1,5 @@
 import requests
+from requests.exceptions import HTTPError
 import logging.config
 import os
 
@@ -15,7 +16,10 @@ class Request:
         response = None
         try:
             response = requests.post(self.url, data=params)
-            return {'status': 'success', 'data': response}
+            if response.ok:
+                return {'status': 'success', 'data': response}
+            else:
+                raise HTTPError(response.content)
         except requests.exceptions.HTTPError as e:
             self.logger.error(e)
             return {'status': 'error', 'data': response, 'message': 'Sorry, but an error has occured.'}
