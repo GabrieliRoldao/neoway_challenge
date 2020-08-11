@@ -13,7 +13,7 @@ class CorreiosScrapper:
     Class responsible to scrap info from website
     """
 
-    def __init__(self, uf='RS', total_items=200):
+    def __init__(self, uf='SP', total_items=200):
         """
         Parameters
 
@@ -27,29 +27,38 @@ class CorreiosScrapper:
         self.total_items = int(total_items)
         self.rows_scrapped = 0
         self.total_to_scrap = self.total_items
+        self.exporter = JsonlExporter()
+        self.file_name = ''
+        self.start_row = 1
+        self.end_row = 100
         logging_path = os.path.join(os.path.dirname(__file__), '../logger/logging.conf')
         logging.config.fileConfig(logging_path)
         self.info_logger = logging.getLogger('scrapperInfo')
 
-    def scrap(self):
+    def scrap(self, file_to_export=None):
         try:
             info = self.__scrap_info()
             if len(info):
-                exporter = JsonlExporter()
-                now = datetime.now().strftime('%Y%m%d%H%M%S')
-                file_name = f'info_from_uf_{self.uf}_{now}'
-
-                exporter.export(data=info, name=file_name)
+                if file_to_export is None:
+                    self.file_name = self.__get_default_file_name()
+                else:
+                    self.file_name = file_to_export
+                self.exporter.export(data=info, name=self.file_name)
                 return True
         except Exception as ex:
             log_error = logging.getLogger('scrapperError')
             log_error.error(ex)
             return False
 
+    def __get_default_file_name(self):
+        now = datetime.now().strftime('%Y%m%d%H%M%s')
+        return f'info_from_uf_{self.uf}_{now}'
+
     def __scrap_info(self):
         all_info_scrapped = []
         result = []
         try:
+            self.start_row = 1
             row_start = 1
             row_end = self.set_size_rows_to_scrap(self.total_items)
             params = self.set_params_to_request(row_start, row_end)
@@ -57,21 +66,25 @@ class CorreiosScrapper:
 
             self.info_logger.info(f'Start to scrap to UF {self.uf}')
             while still_scrap is True:
-                beautiful_soup = self.__build_beautiful_soup(params)
+                beautiful_soup = self.build_beautiful_soup(params)
                 if not self.__has_uf_info(beautiful_soup):
                     raise UfNotFound(self.uf)
 
                 total_items_from_search = self.__get_total_items_from_search(beautiful_soup)
+                if self.__total_items_is_greater_than_items_from_search(total_items_from_search):
+                    #row_end = total_items_from_search
+                    self.total_items = total_items_from_search - 1
+
                 table_content = self.__get_table_element(beautiful_soup)
                 content_table = self.__get_content_from_table(table_content)
                 all_info_scrapped += self.__scrap_infos_from_table(content_table)
 
-                if self.__total_items_is_greater_than_items_from_search(total_items_from_search):
-                    self.total_to_scrap = total_items_from_search - 1
+                #if self.__total_items_is_greater_than_items_from_search(total_items_from_search):
+                #    self.total_items = row_end
 
                 rows_left_to_scrap = self.total_items - self.rows_scrapped
-                if rows_left_to_scrap != 0:
-                    self.__go_to_next_page(row_end, rows_left_to_scrap, params)
+                if rows_left_to_scrap > 0:
+                    self.__go_to_next_page(rows_left_to_scrap, params)
                 else:
                     still_scrap = False
                     self.info_logger.info(
@@ -105,7 +118,7 @@ class CorreiosScrapper:
         else:
             raise Exception
 
-    def __build_beautiful_soup(self, params):
+    def build_beautiful_soup(self, params):
         return bs4.BeautifulSoup(self.__get_info_from_api(params).text, 'lxml')
 
     def __get_total_items_from_search(self, beautiful_soup):
@@ -115,7 +128,7 @@ class CorreiosScrapper:
         return beautiful_soup.select('.tmptabela')
 
     def __has_uf_info(self, beautiful_soup):
-        if len(beautiful_soup.select('title')) == 0:
+        if len(beautiful_soup.select('.tmptabela')) == 0:
             return False
         else:
             return True
@@ -150,11 +163,11 @@ class CorreiosScrapper:
         self.info_logger.info(f'Rows scrapped {len(all_info_scrapped)} from {self.total_items}')
         return all_info_scrapped
 
-    def __go_to_next_page(self, end_row, rows_left_to_scrap, params):
-        start_row = end_row + 1
+    def __go_to_next_page(self, rows_left_to_scrap, params):
+        self.start_row = self.end_row + 1
         if rows_left_to_scrap > 100:
-            end_row += 100
+            self.end_row += 100
         else:
-            end_row += rows_left_to_scrap
-        params['pagini'] = str(start_row)
-        params['pagfim'] = str(end_row)
+            self.end_row += rows_left_to_scrap
+        params['pagini'] = str(self.start_row)
+        params['pagfim'] = str(self.end_row)
